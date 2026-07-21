@@ -1,5 +1,13 @@
 # TWM Dataset JEPA Regression
 
+## To Begin With ...
+
+This repository corresponds to a paper entitled "Field-Layer World Model: Efficient OFDM Receiver by Bridging Channel Prediction and Estimation," submitted to IEEE JSAC.
+
+We provide README in both English and Chinese. The Chinese version is located after the English version.
+
+本仓库所有README均含有中文说明，中文说明在英文说明之后。
+
 ## English
 
 ### Overview
