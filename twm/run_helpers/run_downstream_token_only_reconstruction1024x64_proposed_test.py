@@ -79,13 +79,14 @@ def _sample_fixed_known_rb_mask(batch_size: int, num_bands: int, known_rb_count:
     return mask
 
 
-def _beam_metrics_batch(reconstructed: torch.Tensor, target: torch.Tensor, sc_mask: torch.Tensor | None) -> tuple[float, float]:
+def _beam_metrics_batch(reconstructed: torch.Tensor, target: torch.Tensor, rb_mask: torch.Tensor | None) -> tuple[float, float]:
     avg_power_values: list[float] = []
     ratio_values: list[float] = []
     for b in range(reconstructed.shape[0]):
         for n in range(reconstructed.shape[1]):
-            masked_subcarriers = None if sc_mask is None else sc_mask[b, n]
-            out = evaluate_fa_beamforming(reconstructed[b, n], target[b, n], sc_mask=masked_subcarriers)
+            if rb_mask is not None and not bool(rb_mask[b, n].item()):
+                continue
+            out = evaluate_fa_beamforming(reconstructed[b, n], target[b, n])
             avg_power_values.append(out.avg_rx_power)
             ratio_values.append(out.power_ratio)
     if not avg_power_values:
@@ -142,7 +143,8 @@ def _evaluate_loader_compare(task: ChannelPredReconstruction1024x64Task, loader,
                 else:
                     pred_calibrated, _ = task.pilot_align(predicted_latents, pilot_estimate[:, :, :2], effective_mask)
                     pred_recovered = task.regressor(flat_pilot, pred_calibrated.reshape(-1, 1, pred_calibrated.shape[-1])).view(B, N, 2, H, W)
-                    pred_avg, pred_ratio = _beam_metrics_batch(pred_recovered, target_preprocessed, data_mask)
+                    target_rb_mask = ~effective_mask.to(dtype=torch.bool)
+                    pred_avg, pred_ratio = _beam_metrics_batch(pred_recovered, target_preprocessed, target_rb_mask)
                     per_repeat.setdefault('prediction_recovery_nmse', []).append(_channel_recovery_nmse(pred_recovered, target_preprocessed))
                     per_repeat.setdefault('prediction_fa_avg_rx_power', []).append(pred_avg)
                     per_repeat.setdefault('prediction_fa_power_ratio', []).append(pred_ratio)
