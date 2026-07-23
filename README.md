@@ -46,9 +46,28 @@ The generated outputs include:
 - split report,
 - train/test channel-gain reports.
 
+The repository also includes a runnable raw-scene example under:
+
+- `example_data/01chicago`
+
+This example contains the files required by the generation code:
+
+- `scene_config.json`
+- `xyz_paths.json`
+- `01chicago.xml`
+- `meshes/`
+
+By default, the provided dataset-generation Slurm script uses:
+
+- `RAW_DATA_ROOT=$REPO_ROOT/example_data`
+- `RUN_ROOT=$REPO_ROOT/example_runs`
+
+so the bundled example can be used directly.
+
 Detailed dataset-side documentation is provided in:
 
 - `twm/datasets/README.md`
+- `example_data/README.md`
 
 ### JEPA training structure
 

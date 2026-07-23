@@ -1,0 +1,49 @@
+{
+  "scenario_name": "01chicago",
+  "scene_name": "01chicago",
+  "xml_filename": "01chicago.xml",
+  "base_stations": [
+    {
+      "bs_id": 1,
+      "name": "bs_1",
+      "position": [
+        223.49,
+        40.165,
+        108.0
+      ],
+      "orientation": [
+        0.7071067811865475,
+        -0.7071067811865475,
+        0.0
+      ]
+    },
+    {
+      "bs_id": 2,
+      "name": "bs_2",
+      "position": [
+        -162.65,
+        -288.65,
+        31.042
+      ],
+      "orientation": [
+        0.7071067811865475,
+        -0.7071067811865475,
+        0.0
+      ]
+    },
+    {
+      "bs_id": 3,
+      "name": "bs_3",
+      "position": [
+        -312.4,
+        214.18,
+        97.0
+      ],
+      "orientation": [
+        -1.0,
+        0.0,
+        0.0
+      ]
+    }
+  ]
+}

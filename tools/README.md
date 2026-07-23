@@ -14,7 +14,7 @@ This directory contains helper launchers and Slurm submission templates for the 
 
 ### Dataset-generation Slurm template
 
-- slurm_dataset_gen_01chicago_gt_only.sh: example Slurm script for generating the 01chicago dataset used in the experiments.
+- slurm_dataset_gen_01chicago_gt_only.sh: example Slurm script for generating the 01chicago dataset used in the experiments. By default it reads the bundled raw-scene example under `example_data/01chicago` and writes outputs to `example_runs/`.
 
 ### JEPA Slurm templates
 
@@ -56,7 +56,7 @@ This directory contains helper launchers and Slurm submission templates for the 
 
 ### 数据集生成 Slurm 模板
 
-- slurm_dataset_gen_01chicago_gt_only.sh：用于生成实验中 01chicago 数据集的 Slurm 示例脚本。
+- slurm_dataset_gen_01chicago_gt_only.sh：用于生成实验中 01chicago 数据集的 Slurm 示例脚本。现在默认读取仓库自带的 `example_data/01chicago` 原始场景示例，并把输出写到 `example_runs/`。
 
 ### JEPA Slurm 模板
 

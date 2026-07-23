@@ -19,8 +19,8 @@ export OPENBLAS_NUM_THREADS=1
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 PYTHON_BIN="${PYTHON_BIN:-python}"
 
-RAW_DATA_ROOT="${RAW_DATA_ROOT:-/path/to/raw_dataset_root}"
-RUN_ROOT="${RUN_ROOT:-/path/to/output_run_root}"
+RAW_DATA_ROOT="${RAW_DATA_ROOT:-$REPO_ROOT/example_data}"
+RUN_ROOT="${RUN_ROOT:-$REPO_ROOT/example_runs}"
 DRJIT_ROOT="${DRJIT_ROOT:-$RAW_DATA_ROOT/.drjit}"
 SCENARIO_NAME="${SCENARIO_NAME:-01chicago}"
 XYZ_PATHS_FILE="$RAW_DATA_ROOT/$SCENARIO_NAME/xyz_paths.json"
@@ -44,11 +44,6 @@ TRAIN_PATHS="512"
 TEST_PATHS="88"
 SPLIT_SEED="42"
 MIN_POINT_POWER="1e-10"
-
-if [[ "$RAW_DATA_ROOT" == "/path/to/raw_dataset_root" || "$RUN_ROOT" == "/path/to/output_run_root" ]]; then
-  echo "Please set RAW_DATA_ROOT and RUN_ROOT before submitting this script." >&2
-  exit 1
-fi
 
 if [[ ! -d "$RAW_DATA_ROOT/$SCENARIO_NAME" ]]; then
   echo "Scenario directory does not exist: $RAW_DATA_ROOT/$SCENARIO_NAME" >&2

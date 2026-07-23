@@ -21,6 +21,20 @@ from twm.downstream.channel_pred_reconstruction1024x64_variants import (
     pointwise_batch_to_channel_pred_reconstruction_batch,
 )
 from twm.run_helpers.run_downstream_common import _accumulate_channel_pred_metrics, _mean, _move_batch_to_device, _save_model_state
+
+
+def _sample_random_known_rb_mask(batch_size: int, num_bands: int, device: torch.device) -> torch.Tensor:
+    if num_bands <= 0:
+        raise ValueError('Expected at least one RB.')
+    if num_bands == 1:
+        return torch.ones(batch_size, 1, dtype=torch.bool, device=device)
+    mask = torch.zeros(batch_size, num_bands, dtype=torch.bool, device=device)
+    counts = torch.randint(1, num_bands, (batch_size,), device=device)
+    for idx in range(batch_size):
+        keep = int(counts[idx].item())
+        chosen = torch.randperm(num_bands, device=device)[:keep]
+        mask[idx, chosen] = True
+    return mask
 from twm.pipelines.jepa_32x16 import build_warmup_cosine_scheduler
 
 
@@ -108,7 +122,14 @@ def _evaluate_loader(task: ChannelPredReconstruction1024x64TokenizerOnlyTask, lo
     with torch.no_grad():
         for batch in loader:
             batch = _move_batch_to_device(batch, device)
-            result = task.testing_step(batch.history_channel, batch.history_mask, batch.current_channel, subband_mask=batch.subband_mask, current_gt=batch.current_gt)
+            subband_mask = batch.subband_mask
+            if str(task.config.pilot_align_mode).strip().lower() != 'none':
+                subband_mask = _sample_random_known_rb_mask(
+                    batch.current_channel.shape[0],
+                    batch.current_channel.shape[1],
+                    batch.current_channel.device,
+                )
+            result = task.testing_step(batch.history_channel, batch.history_mask, batch.current_channel, subband_mask=subband_mask, current_gt=batch.current_gt)
             _accumulate_channel_pred_metrics(result, losses, x_losses, recon, practical, gt_recon, latent_target_power, latent_nmse)
     metrics = {
         'loss': _mean(losses),
@@ -223,7 +244,14 @@ def run_downstream_token_only_reconstruction1024x64(args: argparse.Namespace | C
                 else:
                     batch = pointwise_batch_to_channel_pred_reconstruction_batch(batch, device)
                 optimizer.zero_grad(set_to_none=True)
-                output = task.training_step(batch.history_channel, batch.history_mask, batch.current_channel, subband_mask=batch.subband_mask, current_gt=batch.current_gt)
+                subband_mask = batch.subband_mask
+                if str(task.config.pilot_align_mode).strip().lower() != 'none':
+                    subband_mask = _sample_random_known_rb_mask(
+                        batch.current_channel.shape[0],
+                        batch.current_channel.shape[1],
+                        batch.current_channel.device,
+                    )
+                output = task.training_step(batch.history_channel, batch.history_mask, batch.current_channel, subband_mask=subband_mask, current_gt=batch.current_gt)
                 output.loss.backward()
                 optimizer.step()
                 scheduler.step()

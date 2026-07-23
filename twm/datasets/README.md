@@ -15,6 +15,17 @@ It supports the full data pipeline behind the experiments, including:
 
 In the current project, this directory is the main entry point for preparing and loading channel datasets before JEPA and downstream training.
 
+The repository also includes a minimal runnable raw-scene example under:
+
+- `example_data/01chicago`
+
+This example provides the raw files expected by the dataset-generation code:
+
+- `scene_config.json`
+- `xyz_paths.json`
+- `01chicago.xml`
+- `meshes/`
+
 ### Main components
 
 - `data_gen_sionna.py`
@@ -75,6 +86,17 @@ In practice, this directory provides the dataset-loading entry points for:
 - shard 化场景数据的存储与访问工具。
 
 在当前项目中，这个目录是 JEPA 和 downstream 训练前进行数据准备与加载的主要入口。
+
+仓库中还附带了一份最小可运行原始场景示例，位置在：
+
+- `example_data/01chicago`
+
+该示例提供了数据生成代码所需的原始文件：
+
+- `scene_config.json`
+- `xyz_paths.json`
+- `01chicago.xml`
+- `meshes/`
 
 ### 主要组成
 
