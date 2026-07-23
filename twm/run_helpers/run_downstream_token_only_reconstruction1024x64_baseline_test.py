@@ -55,12 +55,12 @@ def _load_base_config(trained_run_dir: Path) -> tuple[ChannelPredReconstruction1
     return ChannelPredReconstruction1024x64TrainingConfig(**filtered), payload
 
 
-def _resolve_baseline_task_cls(trained_run_dir: Path):
+def _resolve_baseline_mode(trained_run_dir: Path):
     name = trained_run_dir.name.lower()
     if 'zero' in name:
-        return ChannelPredReconstruction1024x64ZeroConditionTask, 'zero_baseline'
+        return 'zero', 'zero_baseline'
     if 'scratch' in name:
-        return ChannelPredReconstruction1024x64TokenizerOnlyTask, 'scratch_baseline'
+        return 'scratch', 'scratch_baseline'
     raise ValueError(f'Unable to infer baseline family from run dir name: {trained_run_dir.name}')
 
 
@@ -107,7 +107,7 @@ def _beam_metrics_batch(reconstructed: torch.Tensor, target: torch.Tensor, rb_ma
     return _mean(avg_power_values), _mean(ratio_values)
 
 
-def _evaluate_loader_baseline(task: ChannelPredReconstruction1024x64Task, loader, device: torch.device, *, num_eval_repeats: int, fixed_nmse: float, known_rb_count: int | None = None) -> dict[str, float]:
+def _evaluate_loader_baseline(task: ChannelPredReconstruction1024x64Task, loader, device: torch.device, *, num_eval_repeats: int, fixed_nmse: float, known_rb_count: int | None = None, baseline_mode: str = 'scratch') -> dict[str, float]:
     task.eval()
     mode = str(task.config.pilot_align_mode).strip().lower()
     repeat_values: dict[str, list[float]] = {}
@@ -172,6 +172,7 @@ def main() -> None:
     if args.num_workers is not None:
         config.num_workers = int(args.num_workers)
 
+    baseline_mode, method_name = _resolve_baseline_mode(trained_run_dir)
     _, test_loader, _ = build_channel_pred_three_way_dataloaders(
         dataset_file=config.dataset_file,
         batch_size=config.batch_size,
@@ -186,22 +187,38 @@ def main() -> None:
     predictor_backbone, backbone_kind, reference_domain = build_conditioning_backbone(
         config.pretrained_dir,
         freeze_backbone=config.freeze_backbone,
+        load_weights=(getattr(config, 'backbone_init', 'pretrained') == 'pretrained'),
     )
-    task_cls, method_name = _resolve_baseline_task_cls(trained_run_dir)
-    task = task_cls(
-        predictor_backbone,
-        backbone_kind=backbone_kind,
-        reference_domain=reference_domain,
-        config=ChannelPredReconstruction1024x64Config(
-            pilot_align_mode=config.pilot_align_mode,
-            pilot_align_input_mode=getattr(config, 'pilot_align_input_mode', 'tok'),
-            pilot_est_subcarrier_strides=tuple(config.pilot_est_subcarrier_strides),
-            pilot_est_noise_mode='fixed_nmse',
-            pilot_fixed_nmse=0.0,
-            eval_history_mask_rate=config.eval_history_mask_rate,
-        ),
-        freeze_backbone=config.freeze_backbone,
-    )
+    if baseline_mode == 'zero':
+        task = ChannelPredReconstruction1024x64ZeroConditionTask(
+            predictor_backbone,
+            backbone_kind=backbone_kind,
+            reference_domain=reference_domain,
+            config=ChannelPredReconstruction1024x64Config(
+                pilot_align_mode=config.pilot_align_mode,
+                pilot_align_input_mode=getattr(config, 'pilot_align_input_mode', 'tok'),
+                pilot_est_subcarrier_strides=tuple(config.pilot_est_subcarrier_strides),
+                pilot_est_noise_mode='fixed_nmse',
+                pilot_fixed_nmse=0.0,
+                eval_history_mask_rate=config.eval_history_mask_rate,
+            ),
+            freeze_backbone=config.freeze_backbone,
+        )
+    else:
+        task = ChannelPredReconstruction1024x64Task(
+            predictor_backbone,
+            backbone_kind=backbone_kind,
+            reference_domain=reference_domain,
+            config=ChannelPredReconstruction1024x64Config(
+                pilot_align_mode=config.pilot_align_mode,
+                pilot_align_input_mode=getattr(config, 'pilot_align_input_mode', 'tok'),
+                pilot_est_subcarrier_strides=tuple(config.pilot_est_subcarrier_strides),
+                pilot_est_noise_mode='fixed_nmse',
+                pilot_fixed_nmse=0.0,
+                eval_history_mask_rate=config.eval_history_mask_rate,
+            ),
+            freeze_backbone=config.freeze_backbone,
+        )
     state_dict = torch.load(trained_run_dir / args.checkpoint_name, map_location='cpu')
     task.load_state_dict(state_dict)
     task = task.to(device)
@@ -236,6 +253,7 @@ def main() -> None:
                 num_eval_repeats=args.num_eval_repeats,
                 fixed_nmse=nmse,
                 known_rb_count=known_rb_count,
+                baseline_mode=baseline_mode,
             )
             row = {
                 'trained_run_dir': str(trained_run_dir),

@@ -39,6 +39,7 @@ class ChannelPredReconstruction1024x64TrainingConfig:
     wandb_project: str = 'twm_downstream_reconstruction1024x64_open'
     wandb_run_name: str = ''
     freeze_backbone: bool = True
+    backbone_init: str = 'pretrained'
     pilot_align_mode: str = 'none'
     pilot_est_subcarrier_strides: tuple[int, ...] = (8,)
     pilot_est_noise_mode: str = 'uniform_gaussian'
@@ -75,6 +76,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument('--eval-every-epochs', type=int, default=defaults.eval_every_epochs)
     parser.add_argument('--wandb-project', default=defaults.wandb_project)
     parser.add_argument('--wandb-run-name', default=defaults.wandb_run_name)
+    parser.add_argument('--backbone-init', choices=['pretrained', 'scratch'], default=defaults.backbone_init)
     parser.add_argument('--pilot-align-mode', choices=['none', 'mlp'], default=defaults.pilot_align_mode)
     parser.add_argument('--pilot-est-subcarrier-strides', nargs='+', type=int, default=list(defaults.pilot_est_subcarrier_strides))
     parser.add_argument('--pilot-est-noise-mode', choices=['none', 'uniform_gaussian', 'fixed_nmse'], default=defaults.pilot_est_noise_mode)
@@ -136,9 +138,11 @@ def run_downstream_reconstruction1024x64(args: argparse.Namespace | ChannelPredR
         test_paths=config.test_paths,
     )
 
+    load_weights = config.backbone_init == 'pretrained'
     predictor_backbone, backbone_kind, reference_domain = build_conditioning_backbone(
         config.pretrained_dir,
         freeze_backbone=config.freeze_backbone,
+        load_weights=load_weights,
     )
     task = ChannelPredReconstruction1024x64Task(
         predictor_backbone,

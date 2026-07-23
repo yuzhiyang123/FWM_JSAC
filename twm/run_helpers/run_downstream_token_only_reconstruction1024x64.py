@@ -130,7 +130,10 @@ def run_downstream_token_only_reconstruction1024x64(args: argparse.Namespace | C
     torch.manual_seed(config.seed)
     device = torch.device(config.device)
 
-    if config.train_mode == 'window' or (config.train_mode == 'auto' and config.pilot_align_mode == 'none'):
+    use_window_train = config.train_mode == 'window'
+    if config.train_mode == 'auto':
+        use_window_train = config.pilot_align_mode == 'none' and config.condition_source != 'zero'
+    if use_window_train:
         train_loader, _, _ = build_channel_pred_three_way_dataloaders(
             dataset_file=config.dataset_file,
             batch_size=config.batch_size,

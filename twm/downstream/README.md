@@ -29,6 +29,7 @@ The open-source version keeps two main task packages and moves the thin wrappers
 
 - `channel_pred_reconstruction1024x64_variants.py`
   Consolidated 1024x64 token-only variants. This file contains the token-only and zero-condition variants, as well as the pointwise-to-shared-batch adapter used by those variants.
+  In the open-source helper entrypoint, train_mode=auto keeps window training for token-only no-calibration runs, but switches zero-condition runs to pointwise training by default.
 
 - `baselines_regression32x16.py`
   Consolidated 32x16 baseline tasks. This file contains both the direct-training baseline and the simple-prediction baseline.
@@ -218,6 +219,7 @@ twm/downstream 包含下游信道重建任务及其配套组件。
 
 - `channel_pred_reconstruction1024x64_variants.py`
   合并后的 1024x64 token-only 变体文件。里面包含 token-only、zero-condition 变体，以及这些变体所需的 pointwise-to-shared-batch 适配逻辑。
+  在开源版 helper 入口中，train_mode=auto 会让 token-only 且无 calibration 的训练保持 window 方式，而 zero-condition 默认切换为 pointwise 训练。
 
 - `baselines_regression32x16.py`
   合并后的 32x16 baseline 文件。里面同时包含 direct-training baseline 和 simple-prediction baseline。
